@@ -1,0 +1,63 @@
+---
+title: "Myrsines"
+author: "RASCUNHO"
+date: "2023-09-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(leaflet)
+library(leaflegend)
+library(leaflet.extras)
+library(sf)
+
+
+data<-readRDS("leafletData.RDS")
+
+ecoregions<-data[[1]]
+points<-data[[2]]
+
+
+```
+
+```{r message=FALSE, warning=FALSE, include=TRUE, echo=FALSE, out.width="100%", out.height="900px"}
+pal_bio<- colorFactor("Paired",domain = ecoregions$BIOME)
+pal_dup<- colorFactor(c("skyblue","grey30","tomato"), domain = points$Duplicata_voucher)
+
+
+
+leaflet(points)%>%
+  # addMiniMap()%>%  
+  addFullscreenControl()%>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+addPolygons(data=ecoregions, group = "Ecoregions",
+	fillColor = ~pal_bio(BIOME),
+	color="white",
+	fillOpacity = 0.9)%>%
+  addCircleMarkers(clusterOptions = TRUE,
+                   lng = ~decimallongitude, lat = ~decimallatitude,
+                   color=~pal_dup(Duplicata_voucher),
+                   popup = ~paste0(scientificname,
+                                   "<br/><strong>Data de coleta</strong>:",eventdate,
+                                   #				     "<br/><strong>Localidade</strong>:",locality,
+                                   "<br/><strong>Coletor e duplicata</strong>:",coletor_dupID_e_N,
+                                   "<br/><strong>Identificador</strong>:",identifiedby,
+                                   "<br/><strong>IdentificadorID</strong>:",identifiedbyid,
+					     "<br/><strong>ID interno</strong>:",myid))%>%
+  addLegend("topright", 
+            pal=pal_dup, values = ~Duplicata_voucher,
+            title = "Material",
+            # orientation = 'horizontal',
+            labFormat = labelFormat(prefix = ""))%>%
+ addLayersControl(
+    overlayGroups = c("Ecoregions"),
+    options = layersControlOptions(collapsed = FALSE)
+  )%>%
+  addLegend("bottomright", 
+            pal=pal_bio, values = ~ecoregions$BIOME,
+            title = "WWF biomes Olson et al. 2001",
+            #  orientation = 'horizontal',
+            labFormat = labelFormat(prefix = ""))
+```
+
